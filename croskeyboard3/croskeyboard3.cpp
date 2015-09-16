@@ -207,13 +207,13 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 			if (PrepareForRight)
 				pDevice->RightAlt = true;
 			else
-				pDevice->RightAlt = true;
+				pDevice->LeftAlt = true;
 			return; //alt
 		case 184:
 			if (PrepareForRight)
 				pDevice->RightAlt = false;
 			else
-				pDevice->RightAlt = false;
+				pDevice->LeftAlt = false;
 			return; //alt
 
 		case 42:
@@ -703,6 +703,7 @@ BOOLEAN OnInterruptIsr(
 
 	bool overrideCtrl = false;
 	bool overrideAlt = false;
+	bool overrideAltGr = false;
 	bool overrideWin = false;
 	bool mediaKey = false;
 
@@ -711,8 +712,8 @@ BOOLEAN OnInterruptIsr(
 	BYTE keyCodes[KBD_KEY_CODES] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	for (int i = 0; i < KBD_KEY_CODES; i++) {
 		keyCodes[i] = pDevice->keyCodes[i];
+		BYTE keyCode = keyCodes[i];
 		if (pDevice->LeftCtrl) {
-			BYTE keyCode = keyCodes[i];
 			if (keyCode == 0x3a) {
 				overrideCtrl = true;
 				overrideAlt = true;
@@ -763,33 +764,35 @@ BOOLEAN OnInterruptIsr(
 				mediaKey = true;
 				consumerKey = 0x20; //volume up (F10)
 			}
-			else if (keyCode == 0x2A) {
+			else if (keyCode == 0x2a) {
+				if (!pDevice->LeftAlt)
+					overrideCtrl = true;
 				keyCodes[i] = 0x4c; //delete (backspace)
 			}
 			else if (keyCode == 0x52) {
 				overrideCtrl = true;
-				keyCodes[i] = 0x4b;
+				keyCodes[i] = 0x4b; //page up (up arrow)
 			}
 			else if (keyCode == 0x51) {
 				overrideCtrl = true;
-				keyCodes[i] = 0x4e;
+				keyCodes[i] = 0x4e; //page down (down arrow)
 			}
 		}
 	}
 
 	BYTE ShiftKeys = 0;
-	if (pDevice->LeftCtrl && !overrideCtrl)
+	if (pDevice->LeftCtrl != overrideCtrl)
 		ShiftKeys |= KBD_LCONTROL_BIT;
-	if (pDevice->LeftAlt || overrideAlt)
+	if (pDevice->LeftAlt != overrideAlt)
 		ShiftKeys |= KBD_LALT_BIT;
 	if (pDevice->LeftShift)
 		ShiftKeys |= KBD_LSHIFT_BIT;
-	if (pDevice->LeftWin || overrideWin)
+	if (pDevice->LeftWin != overrideWin)
 		ShiftKeys |= KBD_RGUI_BIT;
 
 	if (pDevice->RightCtrl)
 		ShiftKeys |= KBD_RCONTROL_BIT;
-	if (pDevice->RightAlt)
+	if (pDevice->RightAlt != overrideAltGr)
 		ShiftKeys |= KBD_RALT_BIT;
 	if (pDevice->RightShift)
 		ShiftKeys |= KBD_RSHIFT_BIT;
