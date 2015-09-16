@@ -28,6 +28,8 @@ Ctrl + F10 = Volume Up
 
 Ctrl + Backspace = Delete
 
+Ctrl + Alt + Backspace = Ctrl + Alt + Delete
+
 Ctrl + Up = Page Up
 
 Ctrl + Down = Page Down
