@@ -4,6 +4,8 @@
 static ULONG CrosKeyboardDebugLevel = 100;
 static ULONG CrosKeyboardDebugCatagories = DBG_INIT || DBG_PNP || DBG_IOCTL;
 
+#define POLL 0 //Enable for Bay Trail
+
 NTSTATUS
 DriverEntry(
 	__in PDRIVER_OBJECT  DriverObject,
@@ -15,7 +17,7 @@ DriverEntry(
 	WDF_OBJECT_ATTRIBUTES  attributes;
 
 	CrosKeyboardPrint(DEBUG_LEVEL_INFO, DBG_INIT,
-		"Driver Entry: Built %s %s\n", __DATE__, __TIME__);
+		"Driver Entry");
 
 	WDF_DRIVER_CONFIG_INIT(&config, CrosKeyboardEvtDeviceAdd);
 
@@ -189,6 +191,8 @@ static void update_keyboard(PCROSKEYBOARD_CONTEXT pDevice, BYTE shiftKeys, BYTE 
 void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 	bool PrepareForRight = pDevice->PrepareForRight;
 	pDevice->PrepareForRight = false;
+	if (ps2code < 0)
+		ps2code += 256;
 	switch (ps2code) {
 		case 29:
 			if (PrepareForRight)
@@ -243,6 +247,8 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 }
 
 BYTE HIDCodeFromPS2Code(int ps2code, bool *remove) {
+	if (ps2code < 0)
+		ps2code += 256;
 	*remove = false;
 	switch (ps2code) {
 		case 0x1e:
@@ -521,6 +527,11 @@ BYTE HIDCodeFromPS2Code(int ps2code, bool *remove) {
 			*remove = true;
 			return 0x31; //|
 
+		case 86:
+			return 0x64; //Non-US \ and |
+		case 214:
+			*remove = true;
+			return 0x64; //Non-US \ and |
 		case 39:
 			return 0x33; //;
 		case 167:
@@ -675,21 +686,8 @@ void addCode(PCROSKEYBOARD_CONTEXT pDevice,BYTE code) {
 	}
 }
 
-BOOLEAN OnInterruptIsr(
-	WDFINTERRUPT Interrupt,
-	ULONG MessageID) {
-	UNREFERENCED_PARAMETER(MessageID);
-
-	WDFDEVICE Device = WdfInterruptGetDevice(Interrupt);
-	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(Device);
-
-	if (!pDevice->ConnectInterrupt)
-		return true;
-
-	int ps2code = __inbyte(0x60);
-	if (ps2code == pDevice->lastps2code)
-		return true;
-	pDevice->lastps2code = ps2code;
+void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
+	char ps2code = pDevice->lastps2code;
 	bool remove = false;
 	BYTE hidcode = HIDCodeFromPS2Code(ps2code, &remove);
 	if (remove) {
@@ -702,9 +700,11 @@ BOOLEAN OnInterruptIsr(
 	updateSpecialKeys(pDevice, ps2code);
 
 	bool overrideCtrl = false;
+	bool overrideRCtrl = false;
 	bool overrideAlt = false;
 	bool overrideAltGr = false;
 	bool overrideWin = false;
+	bool overrideShift = false;
 	bool mediaKey = false;
 
 	BYTE consumerKey = 0x00;
@@ -737,10 +737,19 @@ BOOLEAN OnInterruptIsr(
 				//F11 (F4)
 			}
 			else if (keyCode == 0x3e) {
-				overrideCtrl = true;
-				overrideWin = true;
-				keyCodes[i] = 0x2b;
-				//win+tab (F5)
+				if (pDevice->LeftShift) {
+					overrideCtrl = true;
+					overrideWin = true;
+					overrideShift = true;
+					keyCodes[i] = 0x46;
+					//Win + Print Screen (Shift + F5)
+				}
+				else {
+					overrideCtrl = true;
+					overrideWin = true;
+					keyCodes[i] = 0x2b;
+					//win+tab (F5)
+				}
 			}
 			else if (keyCode == 0x3f) {
 				mediaKey = true;
@@ -778,6 +787,56 @@ BOOLEAN OnInterruptIsr(
 				keyCodes[i] = 0x4e; //page down (down arrow)
 			}
 		}
+		if (pDevice->RightCtrl) {
+			if (keyCode == 0x1E) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x3A; //F1 (1)
+			}
+			else if (keyCode == 0x1F) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x3B; //F2 (2)
+			}
+			else if (keyCode == 0x20) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x3C; //F3 (3)
+			}
+			else if (keyCode == 0x21) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x3D; //F4 (4)
+			}
+			else if (keyCode == 0x22) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x3E; //F5 (5)
+			}
+			else if (keyCode == 0x23) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x3F; //F6 (6)
+			}
+			else if (keyCode == 0x24) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x40; //F7 (7)
+			}
+			else if (keyCode == 0x25) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x41; //F8 (8)
+			}
+			else if (keyCode == 0x26) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x42; //F9 (9)
+			}
+			else if (keyCode == 0x27) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x43; //F10 (0)
+			}
+			else if (keyCode == 0x2D) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x44; //F11 (-)
+			}
+			else if (keyCode == 0x2E) {
+				overrideRCtrl = true;
+				keyCodes[i] = 0x45; //F12 (=)
+			}
+		}
 	}
 
 	BYTE ShiftKeys = 0;
@@ -785,12 +844,12 @@ BOOLEAN OnInterruptIsr(
 		ShiftKeys |= KBD_LCONTROL_BIT;
 	if (pDevice->LeftAlt != overrideAlt)
 		ShiftKeys |= KBD_LALT_BIT;
-	if (pDevice->LeftShift)
+	if (pDevice->LeftShift != overrideShift)
 		ShiftKeys |= KBD_LSHIFT_BIT;
 	if (pDevice->LeftWin != overrideWin)
 		ShiftKeys |= KBD_RGUI_BIT;
 
-	if (pDevice->RightCtrl)
+	if (pDevice->RightCtrl != overrideRCtrl)
 		ShiftKeys |= KBD_RCONTROL_BIT;
 	if (pDevice->RightAlt != overrideAltGr)
 		ShiftKeys |= KBD_RALT_BIT;
@@ -812,6 +871,24 @@ BOOLEAN OnInterruptIsr(
 		CrosKeyboardProcessVendorReport(pDevice, &report, sizeof(report), &bytesWritten);
 		update_keyboard(pDevice, ShiftKeys, keyCodes);
 	}
+}
+
+BOOLEAN OnInterruptIsr(
+	WDFINTERRUPT Interrupt,
+	ULONG MessageID) {
+	UNREFERENCED_PARAMETER(MessageID);
+
+	WDFDEVICE Device = WdfInterruptGetDevice(Interrupt);
+	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(Device);
+
+	if (!pDevice->ConnectInterrupt)
+		return true;
+
+	int ps2code = __inbyte(0x60);
+	if (ps2code == pDevice->lastps2code)
+		return true;
+	pDevice->lastps2code = ps2code;
+	keyPressed(pDevice);
 
 	return true;
 }
@@ -821,10 +898,15 @@ void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 	WDFDEVICE Device = (WDFDEVICE)WdfTimerGetParentObject(hTimer);
 	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(Device);
 
-	if (!pDevice->ConnectInterrupt)
-		return;
+	int ps2code = __inbyte(0x60);
 
-	char fixkeys = __inbyte(0x60);
+#ifdef POLL
+	if (ps2code != pDevice->lastps2codeint) {
+		pDevice->lastps2codeint = ps2code;
+		pDevice->lastps2code = ps2code;
+		keyPressed(pDevice);
+	}
+#endif
 
 	return;
 }
