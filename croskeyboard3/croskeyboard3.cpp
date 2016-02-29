@@ -884,6 +884,10 @@ BOOLEAN OnInterruptIsr(
 	if (!pDevice->ConnectInterrupt)
 		return true;
 
+#if POLL
+	return true;
+#endif
+
 	int ps2code = __inbyte(0x60);
 	if (ps2code == pDevice->lastps2code)
 		return true;
