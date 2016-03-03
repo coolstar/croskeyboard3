@@ -904,7 +904,7 @@ void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 
 	int ps2code = __inbyte(0x60);
 
-#ifdef POLL
+#if POLL
 	if (ps2code != pDevice->lastps2codeint) {
 		pDevice->lastps2codeint = ps2code;
 		pDevice->lastps2code = ps2code;
