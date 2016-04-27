@@ -5,6 +5,7 @@ static ULONG CrosKeyboardDebugLevel = 100;
 static ULONG CrosKeyboardDebugCatagories = DBG_INIT || DBG_PNP || DBG_IOCTL;
 
 #define POLL 0 //Enable for Bay Trail
+#define MapSearchToCapsLock 0
 
 NTSTATUS
 DriverEntry(
@@ -235,10 +236,16 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 			return; //right shift
 
 		case 91:
+#if MapSearchToCapsLock
+#else
 			pDevice->LeftWin = true;
+#endif
 			return; //left win
 		case 219:
+#if MapSearchToCapsLock
+#else
 			pDevice->LeftWin = false;
+#endif
 			return; //left win
 	}
 	pDevice->PrepareForRight = false;
@@ -651,6 +658,14 @@ BYTE HIDCodeFromPS2Code(int ps2code, bool *remove) {
 		case 200:
 			*remove = true;
 			return 0x52; // up arrow
+
+#if MapSearchToCapsLock
+		case 91:
+			return 0x39; //left win
+		case 219:
+			*remove = true;
+			return 0x39; //left win
+#endif
 	}
 	return 0x00;
 }
