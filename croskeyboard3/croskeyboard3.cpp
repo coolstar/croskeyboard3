@@ -135,8 +135,6 @@ OnD0Entry(
 	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(FxDevice);
 	NTSTATUS status = STATUS_SUCCESS;
 
-	char junk = __inbyte(0x60);
-
 	WdfTimerStart(pDevice->Timer, WDF_REL_TIMEOUT_IN_MS(10));
 
 	pDevice->ConnectInterrupt = true;
@@ -901,6 +899,11 @@ BOOLEAN OnInterruptIsr(
 	return true;
 #endif
 
+	LARGE_INTEGER currentTime;
+	KeQuerySystemTime(&currentTime);
+
+	pDevice->lastRead = (currentTime.QuadPart / (LONGLONG)10000);
+
 	unsigned char ps2code = __inbyte(0x60);
 	if (ps2code == pDevice->lastps2code)
 		return true;
@@ -910,6 +913,26 @@ BOOLEAN OnInterruptIsr(
 	return true;
 }
 
+
+VOID
+CrosCheckWorkItem(
+	IN WDFWORKITEM  WorkItem
+	)
+{
+	WDFDEVICE Device = (WDFDEVICE)WdfWorkItemGetParentObject(WorkItem);
+	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(Device);
+
+	LARGE_INTEGER currentTime;
+	KeQuerySystemTime(&currentTime);
+
+	LONGLONG current = (currentTime.QuadPart / (LONGLONG)10000);
+	if (current > pDevice->lastRead + 2000) {
+		unsigned char ps2code = __inbyte(0x60);
+		pDevice->lastRead = current;
+	}
+
+	WdfObjectDelete(WorkItem);
+}
 
 void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 	WDFDEVICE Device = (WDFDEVICE)WdfTimerGetParentObject(hTimer);
@@ -922,6 +945,21 @@ void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 		pDevice->lastps2code = ps2code;
 		keyPressed(pDevice);
 	}
+#else
+	WDF_OBJECT_ATTRIBUTES attributes;
+	WDF_WORKITEM_CONFIG workitemConfig;
+	WDFWORKITEM hWorkItem;
+
+	WDF_OBJECT_ATTRIBUTES_INIT(&attributes);
+	WDF_OBJECT_ATTRIBUTES_SET_CONTEXT_TYPE(&attributes, CROSKEYBOARD_CONTEXT);
+	attributes.ParentObject = Device;
+	WDF_WORKITEM_CONFIG_INIT(&workitemConfig, CrosCheckWorkItem);
+
+	WdfWorkItemCreate(&workitemConfig,
+		&attributes,
+		&hWorkItem);
+
+	WdfWorkItemEnqueue(hWorkItem);
 #endif
 
 	return;
@@ -1039,7 +1077,7 @@ CrosKeyboardEvtDeviceAdd(
 
 	WDF_IO_QUEUE_CONFIG_INIT(&queueConfig, WdfIoQueueDispatchManual);
 
-	queueConfig.PowerManaged = WdfFalse;
+	queueConfig.PowerManaged = WdfTrue;
 
 	status = WdfIoQueueCreate(device,
 		&queueConfig,

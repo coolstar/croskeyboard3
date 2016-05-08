@@ -164,6 +164,8 @@ typedef struct _CROSKEYBOARD_CONTEXT
 
 	int lastps2codeint = 0x00;
 
+	LONGLONG lastRead;
+
 	BYTE keyCodes[KBD_KEY_CODES];
 
 } CROSKEYBOARD_CONTEXT, *PCROSKEYBOARD_CONTEXT;
