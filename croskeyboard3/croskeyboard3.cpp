@@ -253,9 +253,7 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 		pDevice->PrepareForRight = true;
 }
 
-BYTE HIDCodeFromPS2Code(int ps2code, bool *remove) {
-	if (ps2code < 0)
-		ps2code += 256;
+BYTE HIDCodeFromPS2Code(unsigned char ps2code, bool *remove) {
 	*remove = false;
 	switch (ps2code) {
 		case 0x1e:
@@ -903,7 +901,7 @@ BOOLEAN OnInterruptIsr(
 	return true;
 #endif
 
-	int ps2code = __inbyte(0x60);
+	unsigned char ps2code = __inbyte(0x60);
 	if (ps2code == pDevice->lastps2code)
 		return true;
 	pDevice->lastps2code = ps2code;
@@ -917,9 +915,8 @@ void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 	WDFDEVICE Device = (WDFDEVICE)WdfTimerGetParentObject(hTimer);
 	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(Device);
 
-	int ps2code = __inbyte(0x60);
-
 #if POLL
+	unsigned char ps2code = __inbyte(0x60);
 	if (ps2code != pDevice->lastps2codeint) {
 		pDevice->lastps2codeint = ps2code;
 		pDevice->lastps2code = ps2code;

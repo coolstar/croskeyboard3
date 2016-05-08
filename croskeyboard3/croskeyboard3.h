@@ -160,7 +160,7 @@ typedef struct _CROSKEYBOARD_CONTEXT
 
 	bool LeftWin;
 
-	char lastps2code = 0x00;
+	unsigned char lastps2code = 0x00;
 
 	int lastps2codeint = 0x00;
 
