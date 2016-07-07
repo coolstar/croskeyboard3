@@ -189,7 +189,7 @@
       <TreatWarningAsError>false</TreatWarningAsError>
     </ClCompile>
     <Inf>
-      <TimeStamp>3.4.1</TimeStamp>
+      <TimeStamp>3.4.2</TimeStamp>
     </Inf>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
