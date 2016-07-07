@@ -927,8 +927,17 @@ CrosCheckWorkItem(
 
 	LONGLONG current = (currentTime.QuadPart / (LONGLONG)10000);
 	if (current > pDevice->lastRead + 2000) {
+		//may have screwed up. reset
+
+		//read remaining byte
 		unsigned char ps2code = __inbyte(0x60);
 		pDevice->lastRead = current;
+
+		//reset and POST ps2 controller
+		__outbyte(0x60, 0xFF);
+
+		//enable scanning
+		__outbyte(0x60, 0xF4);
 	}
 
 	WdfObjectDelete(WorkItem);
