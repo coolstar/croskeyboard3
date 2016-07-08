@@ -6,35 +6,35 @@ Works on the Chromebook Pixel and any chromebook released after the Pixel.
 
 # Function key mapping
 
-Ctrl + F1 = Back
+Left Ctrl + F1 = Back
 
-Ctrl + F2 = Forward
+Left Ctrl + F2 = Forward
 
-Ctrl + F3 = Refresh
+Left Ctrl + F3 = Refresh
 
-Ctrl + F4 = Full Screen
+Left Ctrl + F4 = Full Screen
 
-Ctrl + F5 = Task View
+Left Ctrl + F5 = Task View
 
-Ctrl + Shift + F5 = Capture Screenshot
+Left Ctrl + Shift + F5 = Capture Screenshot
 
-Ctrl + F6 = Brightness Down
+Left Ctrl + F6 = Brightness Down
 
-Ctrl + F7 = Brightness Up
+Left Ctrl + F7 = Brightness Up
 
-Ctrl + F8 = Volume Mute
+Left Ctrl + F8 = Volume Mute
 
-Ctrl + F9 = Volume Down
+Left Ctrl + F9 = Volume Down
 
-Ctrl + F10 = Volume Up
+Left Ctrl + F10 = Volume Up
 
-Ctrl + Backspace = Delete
+Left Ctrl + Backspace = Delete
 
-Ctrl + Alt + Backspace = Ctrl + Alt + Delete
+Left Ctrl + Alt + Backspace = Ctrl + Alt + Delete
 
-Ctrl + Up = Page Up
+LeftCtrl + Up = Page Up
 
-Ctrl + Down = Page Down
+Left Ctrl + Down = Page Down
 
 Right Ctrl + 1 = F1
 
