@@ -32,7 +32,7 @@ Left Ctrl + Backspace = Delete
 
 Left Ctrl + Alt + Backspace = Ctrl + Alt + Delete
 
-LeftCtrl + Up = Page Up
+Left Ctrl + Up = Page Up
 
 Left Ctrl + Down = Page Down
 
