@@ -850,6 +850,188 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 	}
 }
 
+void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
+	BYTE *keyCodes,
+	bool *overrideCtrl,
+	bool *overrideRCtrl,
+	bool *overrideAlt,
+	bool *overrideAltGr,
+	bool *overrideWin,
+	bool *overrideShift,
+	bool *mediaKey,
+	BYTE *consumerKey) {
+	for (int i = 0; i < KBD_KEY_CODES; i++) {
+		keyCodes[i] = pDevice->keyCodes[i];
+		BYTE keyCode = keyCodes[i];
+		if (!pDevice->LeftCtrl) {
+			if (keyCode == 0x3a) {
+				*overrideAlt = true;
+				keyCodes[i] = 0x50;
+				//Alt+Back Arrow (F1)
+			}
+			else if (keyCode == 0x3b) {
+				*overrideAlt = true;
+				keyCodes[i] = 0x4f;
+				//Alt+Forward Arrow (F2)
+			}
+			else if (keyCode == 0x3c) {
+				keyCodes[i] = 0x3e;
+				//F5 (F3)
+			}
+			else if (keyCode == 0x3d) {
+				keyCodes[i] = 0x44;
+				//F11 (F4)
+			}
+			else if (keyCode == 0x3e) {
+				if (pDevice->LeftShift) {
+					*overrideWin = true;
+					*overrideShift = true;
+					keyCodes[i] = 0x46;
+					//Win + Print Screen (Shift + F5)
+				}
+				else {
+					*overrideWin = true;
+					keyCodes[i] = 0x2b;
+					//win+tab (F5)
+				}
+			}
+			else if (keyCode == 0x3f) {
+				*mediaKey = true;
+				*consumerKey = 0x02;
+				//brightness down (F6)
+			}
+			else if (keyCode == 0x40) {
+				*mediaKey = true;
+				*consumerKey = 0x01;
+				//brightness up (F7)
+			}
+			else if (keyCode == 0x41) {
+				*mediaKey = true;
+				*consumerKey = 0x10; //mute (F8)
+			}
+			else if (keyCode == 0x42) {
+				*mediaKey = true;
+				*consumerKey = 0x40; //volume down (F9)
+			}
+			else if (keyCode == 0x43) {
+				*mediaKey = true;
+				*consumerKey = 0x20; //volume up (F10)
+			}
+		}
+		if (pDevice->LeftCtrl) {
+			if (keyCode == 0x3A) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3A; //F1 (F1)
+			}
+			else if (keyCode == 0x3B) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3B; //F2 (F2)
+			}
+			else if (keyCode == 0x3C) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3C; //F3 (F3)
+			}
+
+			else if (keyCode == 0x3D) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3D; //F4 (F4)
+			}
+
+			else if (keyCode == 0x3E) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3E; //F5 (F5)
+			}
+
+			else if (keyCode == 0x3F) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3F; //F6 (F6)
+			}
+
+			else if (keyCode == 0x40) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x40; //F7 (F7)
+			}
+			else if (keyCode == 0x41) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x41; //F8 (F8)
+			}
+			else if (keyCode == 0x42) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x42; //F9 (F9)
+			}
+
+			else if (keyCode == 0x43) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x43; //F10 (F10)
+			}
+
+			else if (keyCode == 0x2a) {
+				if (!pDevice->LeftAlt)
+					*overrideCtrl = true;
+				keyCodes[i] = 0x4c; //delete (backspace)
+			}
+			else if (keyCode == 0x52) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4b; //page up (up arrow)
+			}
+			else if (keyCode == 0x51) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4e; //page down (down arrow)
+			}
+		}
+		if (pDevice->RightCtrl) {
+			if (keyCode == 0x1E) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3A; //F1 (1)
+			}
+			else if (keyCode == 0x1F) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3B; //F2 (2)
+			}
+			else if (keyCode == 0x20) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3C; //F3 (3)
+			}
+			else if (keyCode == 0x21) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3D; //F4 (4)
+			}
+			else if (keyCode == 0x22) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3E; //F5 (5)
+			}
+			else if (keyCode == 0x23) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3F; //F6 (6)
+			}
+			else if (keyCode == 0x24) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x40; //F7 (7)
+			}
+			else if (keyCode == 0x25) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x41; //F8 (8)
+			}
+			else if (keyCode == 0x26) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x42; //F9 (9)
+			}
+			else if (keyCode == 0x27) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x43; //F10 (0)
+			}
+			else if (keyCode == 0x2D) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x44; //F11 (-)
+			}
+			else if (keyCode == 0x2E) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x45; //F12 (=)
+			}
+		}
+	}
+}
+
 void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
 	BYTE *keyCodes,
 	bool *overrideCtrl,
@@ -1092,7 +1274,10 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 		case 1: // chromebook layout optimized mapping
 			CrosKeyboardChromebookLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
 			break;
-		case 2: // Poker II keyboard mapping
+		case 2: // chromebook media key swapped mapping
+			CrosKeyboardMediaKeySwappedLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
+			break;
+		case 3: // Poker II keyboard mapping
 			CrosKeyboardPokerIILayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
 			break;
 	}
