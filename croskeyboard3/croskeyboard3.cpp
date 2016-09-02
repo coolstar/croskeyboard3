@@ -249,7 +249,7 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 BYTE HIDCodeFromPS2Code(PCROSKEYBOARD_CONTEXT pDevice, unsigned char ps2code, bool *remove) {
 	*remove = false;
 	switch (ps2code) {
-		case 0x1e:
+		case 30:
 			return 0x04; //a
 		case 158:
 			*remove = true;
