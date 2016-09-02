@@ -662,6 +662,19 @@ BYTE HIDCodeFromPS2Code(PCROSKEYBOARD_CONTEXT pDevice, unsigned char ps2code, bo
 			}
 			else
 				return 0x00;
+
+		case 94:
+			if (pDevice->settings.powerKeyAsDelete)
+				return 0x4c;
+			else
+				return 0x00;
+		case 222:
+			if (pDevice->settings.powerKeyAsDelete) {
+				*remove = true;
+				return 0x4c;
+			}
+			else
+				return 0x00;
 	}
 	return 0x00;
 }
