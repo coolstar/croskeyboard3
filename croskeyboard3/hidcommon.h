@@ -6,8 +6,8 @@
 // to IOCTL_HID_GET_DEVICE_ATTRIBUTES.
 //
 
-#define CROSKEYBOARD_PID              0xBACC
-#define CROSKEYBOARD_VID              0x00FF
+#define CROSKEYBOARD_PID              0x0303
+#define CROSKEYBOARD_VID              0x18D1
 #define CROSKEYBOARD_VERSION          0x0001
 
 //
@@ -15,7 +15,8 @@
 //
 
 #define REPORTID_KEYBOARD       0x07
-#define REPORTID_MEDIA       0x08
+#define REPORTID_MEDIA          0x08
+#define REPORTID_SETTINGS		0x09
 
 //
 // Keyboard specific report infomation
@@ -94,6 +95,19 @@ typedef struct _CROSKEYBOARD_MAXCOUNT_REPORT
 	BYTE         MaximumCount;
 
 } CrosKeyboardMaxCountReport;
+#pragma pack()
+
+#pragma pack(1)
+typedef struct _CROSKEYBOARD_SETTINGS_REPORT
+{
+
+	BYTE        ReportID;
+
+	BYTE		SettingsRegister;
+
+	BYTE		SettingsValue;
+
+} CrosKeyboardSettingsReport;
 #pragma pack()
 
 #endif

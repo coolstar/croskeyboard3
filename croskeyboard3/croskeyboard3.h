@@ -108,6 +108,20 @@ HID_REPORT_DESCRIPTOR DefaultReportDescriptor[] = {
 	0x95, 0x01, /*		Report Count (1)					*/
 	0x81, 0x01, /*		Input (Constant)					*/
 	0xC0,        /*        End Collection                        */
+
+	0x06, 0x00, 0xff,                    // USAGE_PAGE (Vendor Defined Page 1)
+	0x09, 0x03,                          // USAGE (Vendor Usage 3)
+	0xa1, 0x01,                          // COLLECTION (Application)
+	0x85, REPORTID_SETTINGS,              //   REPORT_ID (Settings)
+	0x15, 0x00,                          //   LOGICAL_MINIMUM (0)
+	0x26, 0xff, 0x00,                    //   LOGICAL_MAXIMUM (256)
+	0x75, 0x08,                          //   REPORT_SIZE  (8)   - bits
+	0x95, 0x01,                          //   REPORT_COUNT (1)  - Bytes
+	0x09, 0x02,                          //   USAGE (Vendor Usage 1)
+	0x91, 0x02,                          //   OUTPUT (Data,Var,Abs)
+	0x09, 0x03,                          //   USAGE (Vendor Usage 2)
+	0x91, 0x02,                          //   OUTPUT (Data,Var,Abs)
+	0xc0,                                // END_COLLECTION
 };
 
 
@@ -130,6 +144,12 @@ CONST HID_DESCRIPTOR DefaultHidDescriptor = {
 
 #define true 1
 #define false 0
+
+struct croskeyboardsettings {
+	int keyboardMapping = 1;
+	int mapSearchToCapsLock = 0;
+	int powerKeyAsDelete = 0;
+};
 
 typedef struct _CROSKEYBOARD_CONTEXT
 {
@@ -167,6 +187,8 @@ typedef struct _CROSKEYBOARD_CONTEXT
 	LONGLONG lastRead;
 
 	BYTE keyCodes[KBD_KEY_CODES];
+
+	struct croskeyboardsettings settings;
 
 } CROSKEYBOARD_CONTEXT, *PCROSKEYBOARD_CONTEXT;
 

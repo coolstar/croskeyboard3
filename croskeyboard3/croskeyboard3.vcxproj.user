@@ -2,7 +2,7 @@
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <SignMode>TestSign</SignMode>
-    <TestCertificate>CN="WDKTestCert CoolStar,131002039613453615" | 47BA72C5A0D2F559EA9FD7E943B307D1E179A49E</TestCertificate>
+    <TestCertificate>CN="WDKTestCert CoolStar,131171551209695040" | 9C2D4190A2D70A55D0D218BA61ABDF3BBE6424A1</TestCertificate>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TestCertificate>CN="WDKTestCert CoolStar,130866550274576043" | E2E07F625597E3627299C4699B59F9ABBB552FE9</TestCertificate>

@@ -5,7 +5,6 @@ static ULONG CrosKeyboardDebugLevel = 100;
 static ULONG CrosKeyboardDebugCatagories = DBG_INIT || DBG_PNP || DBG_IOCTL;
 
 #define POLL 0 //Enable for Bay Trail
-#define MapSearchToCapsLock 0
 
 NTSTATUS
 DriverEntry(
@@ -234,16 +233,12 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 			return; //right shift
 
 		case 91:
-#if MapSearchToCapsLock
-#else
-			pDevice->LeftWin = true;
-#endif
+			if (!pDevice->settings.mapSearchToCapsLock)
+				pDevice->LeftWin = true;
 			return; //left win
 		case 219:
-#if MapSearchToCapsLock
-#else
-			pDevice->LeftWin = false;
-#endif
+			if (!pDevice->settings.mapSearchToCapsLock)
+				pDevice->LeftWin = false;
 			return; //left win
 	}
 	pDevice->PrepareForRight = false;
@@ -251,7 +246,7 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 		pDevice->PrepareForRight = true;
 }
 
-BYTE HIDCodeFromPS2Code(unsigned char ps2code, bool *remove) {
+BYTE HIDCodeFromPS2Code(PCROSKEYBOARD_CONTEXT pDevice, unsigned char ps2code, bool *remove) {
 	*remove = false;
 	switch (ps2code) {
 		case 0x1e:
@@ -655,13 +650,18 @@ BYTE HIDCodeFromPS2Code(unsigned char ps2code, bool *remove) {
 			*remove = true;
 			return 0x52; // up arrow
 
-#if MapSearchToCapsLock
 		case 91:
-			return 0x39; //left win
+			if (pDevice->settings.mapSearchToCapsLock)
+				return 0x39; //left win
+			else
+				return 0x00;
 		case 219:
-			*remove = true;
-			return 0x39; //left win
-#endif
+			if (pDevice->settings.mapSearchToCapsLock) {
+				*remove = true;
+				return 0x39; //left win
+			}
+			else
+				return 0x00;
 	}
 	return 0x00;
 }
@@ -697,10 +697,360 @@ void addCode(PCROSKEYBOARD_CONTEXT pDevice,BYTE code) {
 	}
 }
 
+void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
+						BYTE *keyCodes,
+						bool *overrideCtrl,
+						bool *overrideRCtrl,
+						bool *overrideAlt,
+						bool *overrideAltGr,
+						bool *overrideWin,
+						bool *overrideShift,
+						bool *mediaKey,
+						BYTE *consumerKey) {
+	for (int i = 0; i < KBD_KEY_CODES; i++) {
+		keyCodes[i] = pDevice->keyCodes[i];
+		BYTE keyCode = keyCodes[i];
+		if (pDevice->LeftCtrl) {
+			if (keyCode == 0x3a) {
+				*overrideCtrl = true;
+				*overrideAlt = true;
+				keyCodes[i] = 0x50;
+				//Alt+Back Arrow (F1)
+			}
+			else if (keyCode == 0x3b) {
+				*overrideCtrl = true;
+				*overrideAlt = true;
+				keyCodes[i] = 0x4f;
+				//Alt+Forward Arrow (F2)
+			}
+			else if (keyCode == 0x3c) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x3e;
+				//F5 (F3)
+			}
+			else if (keyCode == 0x3d) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x44;
+				//F11 (F4)
+			}
+			else if (keyCode == 0x3e) {
+				if (pDevice->LeftShift) {
+					*overrideCtrl = true;
+					*overrideWin = true;
+					*overrideShift = true;
+					keyCodes[i] = 0x46;
+					//Win + Print Screen (Shift + F5)
+				}
+				else {
+					*overrideCtrl = true;
+					*overrideWin = true;
+					keyCodes[i] = 0x2b;
+					//win+tab (F5)
+				}
+			}
+			else if (keyCode == 0x3f) {
+				*mediaKey = true;
+				*consumerKey = 0x02;
+				//brightness down (F6)
+			}
+			else if (keyCode == 0x40) {
+				*mediaKey = true;
+				*consumerKey = 0x01;
+				//brightness up (F7)
+			}
+			else if (keyCode == 0x41) {
+				*mediaKey = true;
+				*consumerKey = 0x10; //mute (F8)
+			}
+			else if (keyCode == 0x42) {
+				*mediaKey = true;
+				*consumerKey = 0x40; //volume down (F9)
+			}
+			else if (keyCode == 0x43) {
+				*mediaKey = true;
+				*consumerKey = 0x20; //volume up (F10)
+			}
+			else if (keyCode == 0x2a) {
+				if (!pDevice->LeftAlt)
+					*overrideCtrl = true;
+				keyCodes[i] = 0x4c; //delete (backspace)
+			}
+			else if (keyCode == 0x52) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4b; //page up (up arrow)
+			}
+			else if (keyCode == 0x51) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4e; //page down (down arrow)
+			}
+		}
+		if (pDevice->RightCtrl) {
+			if (keyCode == 0x1E) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3A; //F1 (1)
+			}
+			else if (keyCode == 0x1F) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3B; //F2 (2)
+			}
+			else if (keyCode == 0x20) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3C; //F3 (3)
+			}
+			else if (keyCode == 0x21) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3D; //F4 (4)
+			}
+			else if (keyCode == 0x22) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3E; //F5 (5)
+			}
+			else if (keyCode == 0x23) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x3F; //F6 (6)
+			}
+			else if (keyCode == 0x24) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x40; //F7 (7)
+			}
+			else if (keyCode == 0x25) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x41; //F8 (8)
+			}
+			else if (keyCode == 0x26) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x42; //F9 (9)
+			}
+			else if (keyCode == 0x27) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x43; //F10 (0)
+			}
+			else if (keyCode == 0x2D) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x44; //F11 (-)
+			}
+			else if (keyCode == 0x2E) {
+				*overrideRCtrl = true;
+				keyCodes[i] = 0x45; //F12 (=)
+			}
+		}
+	}
+}
+
+void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
+	BYTE *keyCodes,
+	bool *overrideCtrl,
+	bool *overrideRCtrl,
+	bool *overrideAlt,
+	bool *overrideAltGr,
+	bool *overrideWin,
+	bool *overrideShift,
+	bool *mediaKey,
+	BYTE *consumerKey) {
+	for (int i = 0; i < KBD_KEY_CODES; i++) {
+		keyCodes[i] = pDevice->keyCodes[i];
+		BYTE keyCode = keyCodes[i];
+		if (keyCode == 0x3a) {
+			*overrideAlt = true;
+			keyCodes[i] = 0x50; // Alt+Back Arrow (F1)
+		}
+		else if (keyCode == 0x3b) {
+			*overrideAlt = true;
+			keyCodes[i] = 0x4f; // Alt+Forward Arrow (F2)
+		}
+		else if (keyCode == 0x3c) {
+			keyCodes[i] = 0x3e; // F5 (F3)
+		}
+		else if (keyCode == 0x3d) {
+			keyCodes[i] = 0x44; // F11 (F4)
+		}
+		else if (keyCode == 0x3e) {
+			*overrideWin = true;
+			keyCodes[i] = 0x2b; // Win+Tab (F5)
+		}
+		else if (keyCode == 0x3f) {
+			*mediaKey = true;
+			*consumerKey = 0x02; // Brightness Down (F6)
+		}
+		else if (keyCode == 0x40) {
+			*mediaKey = true;
+			*consumerKey = 0x01; // Brightness Up (F7)
+		}
+		else if (keyCode == 0x41) {
+			*mediaKey = true;
+			*consumerKey = 0x10; // Mute (F8)
+		}
+		else if (keyCode == 0x42) {
+			*mediaKey = true;
+			*consumerKey = 0x40; // Volume Down (F9)
+		}
+		else if (keyCode == 0x43) {
+			*mediaKey = true;
+			*consumerKey = 0x20; // Volume Up (F10)
+		}
+
+		if (pDevice->RightCtrl) {
+			*overrideRCtrl = true;
+			if (keyCode == 0x1e) {
+				keyCodes[i] = 0x3a; // F1
+			}
+			else if (keyCode == 0x1f) {
+				keyCodes[i] = 0x3b; // F2
+			}
+			else if (keyCode == 0x20) {
+				keyCodes[i] = 0x3c; // F3
+			}
+			else if (keyCode == 0x21) {
+				keyCodes[i] = 0x3d; // F4
+			}
+			else if (keyCode == 0x22) {
+				keyCodes[i] = 0x3e; // F5
+			}
+			else if (keyCode == 0x23) {
+				keyCodes[i] = 0x3f; // F6
+			}
+			else if (keyCode == 0x24) {
+				keyCodes[i] = 0x40; // F7
+			}
+			else if (keyCode == 0x25) {
+				keyCodes[i] = 0x41; // F8
+			}
+			else if (keyCode == 0x26) {
+				keyCodes[i] = 0x42; // F9
+			}
+			else if (keyCode == 0x27) {
+				keyCodes[i] = 0x43; // F10
+			}
+			else if (keyCode == 0x2d) {
+				keyCodes[i] = 0x44; // F11
+			}
+			else if (keyCode == 0x2e) {
+				keyCodes[i] = 0x45; // F12
+			}
+			else if (keyCode == 0x1b) {
+				keyCodes[i] = 0x65; // App (x)
+			}
+			else if (keyCode == 0x34) {
+				keyCodes[i] = 0x4b; // Page Up (')
+			}
+			else if (keyCode == 0x38) {
+				keyCodes[i] = 0x4e; // Page Down (/)
+			}
+			else if (keyCode == 0x13) {
+				keyCodes[i] = 0x46; // Print Screen (p)
+			}
+			else if (keyCode == 0x33) {
+				keyCodes[i] = 0x4a; // Home (;)
+			}
+			else if (keyCode == 0x37) {
+				keyCodes[i] = 0x4d; // End (.)
+			}
+			else if (keyCode == 0x2f) {
+				keyCodes[i] = 0x47; // Scroll Lock ([)
+			}
+			else if (keyCode == 0x30) {
+				keyCodes[i] = 0x48; // Pause (])
+			}
+			else if (keyCode == 0x0c) {
+				keyCodes[i] = 0x49; // Insert (i)
+			}
+			else if (keyCode == 0x2a) {
+				keyCodes[i] = 0x4c; // Delete (backspace)
+			}
+			else if (keyCode == 0x28) {
+				keyCodes[i] = 0x58; // Numpad Enter (Enter)
+			}
+
+			// Disable other keys
+			else if (keyCode == 0x04) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x05) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x06) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x07) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x08) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x09) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x0a) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x0b) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x0d) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x0e) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x0f) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x10) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x11) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x12) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x14) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x15) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x16) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x17) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x18) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x19) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x1a) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x1c) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x1d) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x36) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x31) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x64) {
+				keyCodes[i] = 0x00;
+			}
+			else if (keyCode == 0x35) {
+				keyCodes[i] = 0x00;
+			}
+		}
+	}
+}
+
 void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 	char ps2code = pDevice->lastps2code;
 	bool remove = false;
-	BYTE hidcode = HIDCodeFromPS2Code(ps2code, &remove);
+	BYTE hidcode = HIDCodeFromPS2Code(pDevice, ps2code, &remove);
 	if (remove) {
 		removeCode(pDevice, hidcode);
 	}
@@ -721,133 +1071,17 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 	BYTE consumerKey = 0x00;
 
 	BYTE keyCodes[KBD_KEY_CODES] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	for (int i = 0; i < KBD_KEY_CODES; i++) {
-		keyCodes[i] = pDevice->keyCodes[i];
-		BYTE keyCode = keyCodes[i];
-		if (pDevice->LeftCtrl) {
-			if (keyCode == 0x3a) {
-				overrideCtrl = true;
-				overrideAlt = true;
-				keyCodes[i] = 0x50;
-				//Alt+Back Arrow (F1)
-			}
-			else if (keyCode == 0x3b) {
-				overrideCtrl = true;
-				overrideAlt = true;
-				keyCodes[i] = 0x4f;
-				//Alt+Forward Arrow (F2)
-			}
-			else if (keyCode == 0x3c) {
-				overrideCtrl = true;
-				keyCodes[i] = 0x3e;
-				//F5 (F3)
-			}
-			else if (keyCode == 0x3d) {
-				overrideCtrl = true;
-				keyCodes[i] = 0x44;
-				//F11 (F4)
-			}
-			else if (keyCode == 0x3e) {
-				if (pDevice->LeftShift) {
-					overrideCtrl = true;
-					overrideWin = true;
-					overrideShift = true;
-					keyCodes[i] = 0x46;
-					//Win + Print Screen (Shift + F5)
-				}
-				else {
-					overrideCtrl = true;
-					overrideWin = true;
-					keyCodes[i] = 0x2b;
-					//win+tab (F5)
-				}
-			}
-			else if (keyCode == 0x3f) {
-				mediaKey = true;
-				consumerKey = 0x02;
-				//brightness down (F6)
-			}
-			else if (keyCode == 0x40) {
-				mediaKey = true;
-				consumerKey = 0x01;
-				//brightness up (F7)
-			}
-			else if (keyCode == 0x41) {
-				mediaKey = true;
-				consumerKey = 0x10; //mute (F8)
-			}
-			else if (keyCode == 0x42) {
-				mediaKey = true;
-				consumerKey = 0x40; //volume down (F9)
-			}
-			else if (keyCode == 0x43) {
-				mediaKey = true;
-				consumerKey = 0x20; //volume up (F10)
-			}
-			else if (keyCode == 0x2a) {
-				if (!pDevice->LeftAlt)
-					overrideCtrl = true;
-				keyCodes[i] = 0x4c; //delete (backspace)
-			}
-			else if (keyCode == 0x52) {
-				overrideCtrl = true;
-				keyCodes[i] = 0x4b; //page up (up arrow)
-			}
-			else if (keyCode == 0x51) {
-				overrideCtrl = true;
-				keyCodes[i] = 0x4e; //page down (down arrow)
-			}
-		}
-		if (pDevice->RightCtrl) {
-			if (keyCode == 0x1E) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x3A; //F1 (1)
-			}
-			else if (keyCode == 0x1F) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x3B; //F2 (2)
-			}
-			else if (keyCode == 0x20) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x3C; //F3 (3)
-			}
-			else if (keyCode == 0x21) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x3D; //F4 (4)
-			}
-			else if (keyCode == 0x22) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x3E; //F5 (5)
-			}
-			else if (keyCode == 0x23) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x3F; //F6 (6)
-			}
-			else if (keyCode == 0x24) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x40; //F7 (7)
-			}
-			else if (keyCode == 0x25) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x41; //F8 (8)
-			}
-			else if (keyCode == 0x26) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x42; //F9 (9)
-			}
-			else if (keyCode == 0x27) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x43; //F10 (0)
-			}
-			else if (keyCode == 0x2D) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x44; //F11 (-)
-			}
-			else if (keyCode == 0x2E) {
-				overrideRCtrl = true;
-				keyCodes[i] = 0x45; //F12 (=)
-			}
-		}
+	switch (pDevice->settings.keyboardMapping) {
+		case 0: // no shortcut mapping
+			for (int i = 0; i < KBD_KEY_CODES; i++)
+				keyCodes[i] = pDevice->keyCodes[i];
+			break;
+		case 1: // chromebook layout optimized mapping
+			CrosKeyboardChromebookLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
+			break;
+		case 2: // Poker II keyboard mapping
+			CrosKeyboardPokerIILayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
+			break;
 	}
 
 	BYTE ShiftKeys = 0;
@@ -1146,6 +1380,11 @@ CrosKeyboardEvtDeviceAdd(
 	//
 
 	devContext->DeviceMode = DEVICE_MODE_MOUSE;
+	
+	//Set Default Settings
+	devContext->settings.keyboardMapping = 1;
+	devContext->settings.mapSearchToCapsLock = 0;
+	devContext->settings.powerKeyAsDelete = 0;
 
 	return status;
 }
@@ -1715,8 +1954,21 @@ CrosKeyboardWriteReport(
 
 			switch (transferPacket->reportId)
 			{
-			default:
+			case REPORTID_SETTINGS: {
+				CrosKeyboardSettingsReport *pReport = (CrosKeyboardSettingsReport *)transferPacket->reportBuffer;
 
+				int reg = pReport->SettingsRegister;
+				int val = pReport->SettingsValue;
+
+				if (reg == 0)
+					DevContext->settings.keyboardMapping = val;
+				else if (reg == 1)
+					DevContext->settings.mapSearchToCapsLock = val;
+				else if (reg == 2)
+					DevContext->settings.powerKeyAsDelete = val;
+				break;
+			}
+			default:
 				CrosKeyboardPrint(DEBUG_LEVEL_ERROR, DBG_IOCTL,
 					"CrosKeyboardWriteReport Unhandled report type %d\n", transferPacket->reportId);
 
