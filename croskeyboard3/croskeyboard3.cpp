@@ -770,14 +770,25 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 				}
 			}
 			else if (keyCode == 0x3f) {
-				*mediaKey = true;
-				*consumerKey = 0x02;
-				//brightness down (F6)
+				if (pDevice->LeftShift) {
+					keyCodes[i] = 0x72;
+					// Keyboard Brightness Down / Ctrl + F23 (Shift + F6)
+				}
+				else {
+					*mediaKey = true;
+					*consumerKey = 0x02;
+					//brightness down (F6)
+				}
 			}
 			else if (keyCode == 0x40) {
-				*mediaKey = true;
-				*consumerKey = 0x01;
-				//brightness up (F7)
+				if (pDevice->LeftShift) {
+					keyCodes[i] = 0x73;
+					// Keyboard Brightness Up / Ctrl + F24 (Shift + F7)
+				} else {
+					*mediaKey = true;
+					*consumerKey = 0x01;
+					// brightness up (F7)
+				}
 			}
 			else if (keyCode == 0x41) {
 				*mediaKey = true;
@@ -911,14 +922,28 @@ void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
 				}
 			}
 			else if (keyCode == 0x3f) {
-				*mediaKey = true;
-				*consumerKey = 0x02;
-				//brightness down (F6)
+				if (pDevice->LeftShift) {
+					*overrideCtrl = true;
+					keyCodes[i] = 0x72;
+					// Keyboard Brightness Down / Ctrl + F23 (Shift + F6)
+				}
+				else {
+					*mediaKey = true;
+					*consumerKey = 0x02;
+					//brightness down (F6)
+				}
 			}
 			else if (keyCode == 0x40) {
-				*mediaKey = true;
-				*consumerKey = 0x01;
-				//brightness up (F7)
+				if (pDevice->LeftShift) {
+					*overrideCtrl = true;
+					keyCodes[i] = 0x73;
+					// Keyboard Brightness Up / Ctrl + F24 (Shift + F7)
+				}
+				else {
+					*mediaKey = true;
+					*consumerKey = 0x01;
+					// brightness up (F7)
+				}
 			}
 			else if (keyCode == 0x41) {
 				*mediaKey = true;
@@ -1079,12 +1104,28 @@ void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
 			keyCodes[i] = 0x2b; // Win+Tab (F5)
 		}
 		else if (keyCode == 0x3f) {
-			*mediaKey = true;
-			*consumerKey = 0x02; // Brightness Down (F6)
+			if (pDevice->LeftShift) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x72;
+				// Keyboard Brightness Down / Ctrl + F23 (Shift + F6)
+			}
+			else {
+				*mediaKey = true;
+				*consumerKey = 0x02;
+				//brightness down (F6)
+			}
 		}
 		else if (keyCode == 0x40) {
-			*mediaKey = true;
-			*consumerKey = 0x01; // Brightness Up (F7)
+			if (pDevice->LeftShift) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x73;
+				// Keyboard Brightness Up / Ctrl + F24 (Shift + F7)
+			}
+			else {
+				*mediaKey = true;
+				*consumerKey = 0x01;
+				// brightness up (F7)
+			}
 		}
 		else if (keyCode == 0x41) {
 			*mediaKey = true;
