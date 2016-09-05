@@ -1097,7 +1097,15 @@ void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
 			keyCodes[i] = 0x3e; // F5 (F3)
 		}
 		else if (keyCode == 0x3d) {
-			keyCodes[i] = 0x44; // F11 (F4)
+			if (pDevice->LeftShift) {
+				*overrideWin = true;
+				*overrideShift = true;
+				keyCodes[i] = 0x13; // Windows Key + P (Shift + F4)
+			}
+			else {
+				keyCodes[i] = 0x44;
+				//F11 (F4)
+			}
 		}
 		else if (keyCode == 0x3e) {
 			*overrideWin = true;
