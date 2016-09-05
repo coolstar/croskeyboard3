@@ -719,7 +719,9 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 						bool *overrideWin,
 						bool *overrideShift,
 						bool *mediaKey,
-						BYTE *consumerKey) {
+						BYTE *consumerKey,
+						bool *specKey,
+						BYTE *specialKey) {
 	for (int i = 0; i < KBD_KEY_CODES; i++) {
 		keyCodes[i] = pDevice->keyCodes[i];
 		BYTE keyCode = keyCodes[i];
@@ -771,8 +773,9 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 			}
 			else if (keyCode == 0x3f) {
 				if (pDevice->LeftShift) {
-					keyCodes[i] = 0x72;
-					// Keyboard Brightness Down / Ctrl + F23 (Shift + F6)
+					*specKey = true;
+					*specialKey = 0x02;
+					// Keyboard Brightness Down
 				}
 				else {
 					*mediaKey = true;
@@ -782,8 +785,9 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 			}
 			else if (keyCode == 0x40) {
 				if (pDevice->LeftShift) {
-					keyCodes[i] = 0x73;
-					// Keyboard Brightness Up / Ctrl + F24 (Shift + F7)
+					*specKey = true;
+					*specialKey = 0x01;
+					// Keyboard Brightness Up
 				} else {
 					*mediaKey = true;
 					*consumerKey = 0x01;
@@ -878,7 +882,9 @@ void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
 	bool *overrideWin,
 	bool *overrideShift,
 	bool *mediaKey,
-	BYTE *consumerKey) {
+	BYTE *consumerKey,
+	bool *specKey,
+	BYTE *specialKey) {
 	for (int i = 0; i < KBD_KEY_CODES; i++) {
 		keyCodes[i] = pDevice->keyCodes[i];
 		BYTE keyCode = keyCodes[i];
@@ -923,9 +929,9 @@ void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
 			}
 			else if (keyCode == 0x3f) {
 				if (pDevice->LeftShift) {
-					*overrideCtrl = true;
-					keyCodes[i] = 0x72;
-					// Keyboard Brightness Down / Ctrl + F23 (Shift + F6)
+					*specKey = true;
+					*specialKey = 0x02;
+					// Keyboard Brightness Down
 				}
 				else {
 					*mediaKey = true;
@@ -935,9 +941,9 @@ void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
 			}
 			else if (keyCode == 0x40) {
 				if (pDevice->LeftShift) {
-					*overrideCtrl = true;
-					keyCodes[i] = 0x73;
-					// Keyboard Brightness Up / Ctrl + F24 (Shift + F7)
+					*specKey = true;
+					*specialKey = 0x01;
+					// Keyboard Brightness Up
 				}
 				else {
 					*mediaKey = true;
@@ -1081,7 +1087,9 @@ void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
 	bool *overrideWin,
 	bool *overrideShift,
 	bool *mediaKey,
-	BYTE *consumerKey) {
+	BYTE *consumerKey,
+	bool *specKey,
+	BYTE *specialKey) {
 	for (int i = 0; i < KBD_KEY_CODES; i++) {
 		keyCodes[i] = pDevice->keyCodes[i];
 		BYTE keyCode = keyCodes[i];
@@ -1113,9 +1121,9 @@ void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
 		}
 		else if (keyCode == 0x3f) {
 			if (pDevice->LeftShift) {
-				*overrideCtrl = true;
-				keyCodes[i] = 0x72;
-				// Keyboard Brightness Down / Ctrl + F23 (Shift + F6)
+				*specKey = true;
+				*specialKey = 0x02;
+				// Keyboard Brightness Down
 			}
 			else {
 				*mediaKey = true;
@@ -1125,9 +1133,9 @@ void CrosKeyboardPokerIILayout(PCROSKEYBOARD_CONTEXT pDevice,
 		}
 		else if (keyCode == 0x40) {
 			if (pDevice->LeftShift) {
-				*overrideCtrl = true;
-				keyCodes[i] = 0x73;
-				// Keyboard Brightness Up / Ctrl + F24 (Shift + F7)
+				*specKey = true;
+				*specialKey = 0x01;
+				// Keyboard Brightness Up
 			}
 			else {
 				*mediaKey = true;
@@ -1325,9 +1333,12 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 	bool overrideAltGr = false;
 	bool overrideWin = false;
 	bool overrideShift = false;
+
 	bool mediaKey = false;
+	bool specKey = false;
 
 	BYTE consumerKey = 0x00;
+	BYTE specialKey = 0x00;
 
 	BYTE keyCodes[KBD_KEY_CODES] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 	switch (pDevice->settings.keyboardMapping) {
@@ -1336,13 +1347,13 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 				keyCodes[i] = pDevice->keyCodes[i];
 			break;
 		case 1: // chromebook layout optimized mapping
-			CrosKeyboardChromebookLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
+			CrosKeyboardChromebookLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey, &specKey, &specialKey);
 			break;
 		case 2: // chromebook media key swapped mapping
-			CrosKeyboardMediaKeySwappedLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
+			CrosKeyboardMediaKeySwappedLayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey, &specKey, &specialKey);
 			break;
 		case 3: // Poker II keyboard mapping
-			CrosKeyboardPokerIILayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey);
+			CrosKeyboardPokerIILayout(pDevice, keyCodes, &overrideCtrl, &overrideRCtrl, &overrideAlt, &overrideAltGr, &overrideWin, &overrideShift, &mediaKey, &consumerKey, &specKey, &specialKey);
 			break;
 	}
 
@@ -1364,20 +1375,37 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 		ShiftKeys |= KBD_RSHIFT_BIT;
 
 	if (mediaKey) {
-		_CROSKEYBOARD_MEDIA_REPORT report;
-		report.ReportID = REPORTID_MEDIA;
-		report.ControlCode = consumerKey;
+		_CROSKEYBOARD_MEDIA_REPORT mediaReport;
+		mediaReport.ReportID = REPORTID_MEDIA;
+		mediaReport.ControlCode = consumerKey;
 		size_t bytesWritten;
-		CrosKeyboardProcessVendorReport(pDevice, &report, sizeof(report), &bytesWritten);
+		CrosKeyboardProcessVendorReport(pDevice, &mediaReport, sizeof(mediaReport), &bytesWritten);
 	}
 	else {
-		_CROSKEYBOARD_MEDIA_REPORT report;
-		report.ReportID = REPORTID_MEDIA;
-		report.ControlCode = 0x00;
+		_CROSKEYBOARD_MEDIA_REPORT mediaReport;
+		mediaReport.ReportID = REPORTID_MEDIA;
+		mediaReport.ControlCode = 0x00;
 		size_t bytesWritten;
-		CrosKeyboardProcessVendorReport(pDevice, &report, sizeof(report), &bytesWritten);
-		update_keyboard(pDevice, ShiftKeys, keyCodes);
+		CrosKeyboardProcessVendorReport(pDevice, &mediaReport, sizeof(mediaReport), &bytesWritten);
 	}
+
+	if (specKey) {
+		_CROSKEYBOARD_SPECKEY_REPORT specReport;
+		specReport.ReportID = REPORTID_SPECKEYS;
+		specReport.ControlCode = specialKey;
+		size_t bytesWritten;
+		CrosKeyboardProcessVendorReport(pDevice, &specReport, sizeof(specReport), &bytesWritten);
+	}
+	else {
+		_CROSKEYBOARD_SPECKEY_REPORT specReport;
+		specReport.ReportID = REPORTID_SPECKEYS;
+		specReport.ControlCode = 0x00;
+		size_t bytesWritten;
+		CrosKeyboardProcessVendorReport(pDevice, &specReport, sizeof(specReport), &bytesWritten);
+	}
+
+	if (!mediaKey && !specialKey)
+		update_keyboard(pDevice, ShiftKeys, keyCodes);
 }
 
 BOOLEAN OnInterruptIsr(
