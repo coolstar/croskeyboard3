@@ -742,9 +742,17 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 				//F5 (F3)
 			}
 			else if (keyCode == 0x3d) {
-				*overrideCtrl = true;
-				keyCodes[i] = 0x44;
-				//F11 (F4)
+				if (pDevice->LeftShift) {
+					*overrideCtrl = true;
+					*overrideWin = true;
+					*overrideShift = true;
+					keyCodes[i] = 0x13; // Windows Key + P (Shift + F4)
+				}
+				else {
+					*overrideCtrl = true;
+					keyCodes[i] = 0x44;
+					//F11 (F4)
+				}
 			}
 			else if (keyCode == 0x3e) {
 				if (pDevice->LeftShift) {
@@ -879,8 +887,15 @@ void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
 				//F5 (F3)
 			}
 			else if (keyCode == 0x3d) {
-				keyCodes[i] = 0x44;
-				//F11 (F4)
+				if (pDevice->LeftShift) {
+					*overrideWin = true;
+					*overrideShift = true;
+					keyCodes[i] = 0x13; // Windows Key + P (Shift + F4)
+				}
+				else {
+					keyCodes[i] = 0x44;
+					//F11 (F4)
+				}
 			}
 			else if (keyCode == 0x3e) {
 				if (pDevice->LeftShift) {
