@@ -240,6 +240,13 @@ void updateSpecialKeys(PCROSKEYBOARD_CONTEXT pDevice, int ps2code) {
 			if (!pDevice->settings.mapSearchToCapsLock)
 				pDevice->LeftWin = false;
 			return; //left win
+
+		case 92:
+			pDevice->RightWin = true;
+			return;
+		case 220:
+			pDevice->RightWin = false;
+			return;
 	}
 	pDevice->PrepareForRight = false;
 	if (ps2code == 224)
@@ -626,6 +633,18 @@ BYTE HIDCodeFromPS2Code(PCROSKEYBOARD_CONTEXT pDevice, unsigned char ps2code, bo
 			*remove = true;
 			return 0x43; // F10
 
+		case 87:
+			return 0x44; // F11
+		case 215:
+			*remove = true;
+			return 0x44; // F11
+
+		case 88:
+			return 0x45; // F12
+		case 216:
+			*remove = true;
+			return 0x45; // F12
+
 		case 77:
 			return 0x4f; // right arrow
 		case 205:
@@ -649,6 +668,42 @@ BYTE HIDCodeFromPS2Code(PCROSKEYBOARD_CONTEXT pDevice, unsigned char ps2code, bo
 		case 200:
 			*remove = true;
 			return 0x52; // up arrow
+
+		case 81:
+			return 0x4E; // page down
+		case 209:
+			*remove = true;
+			return 0x4E; // page down
+
+		case 73:
+			return 0x4B; // page up
+		case 201:
+			*remove = true;
+			return 0x4B; // page up
+
+		case 71:
+			return 0x4A; // home
+		case 199:
+			*remove = true;
+			return 0x4A; // home
+
+		case 79:
+			return 0x4D; // end
+		case 207:
+			*remove = true;
+			return 0x4D; // end
+
+		case 82:
+			return 0x49; // insert
+		case 210:
+			*remove = true;
+			return 0x49; // insert
+
+		case 83:
+			return 0x4C; // delete
+		case 211:
+			*remove = true;
+			return 0x4C; // delete
 
 		case 91:
 			if (pDevice->settings.mapSearchToCapsLock)
@@ -1365,7 +1420,7 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 	if (pDevice->LeftShift != overrideShift)
 		ShiftKeys |= KBD_LSHIFT_BIT;
 	if (pDevice->LeftWin != overrideWin)
-		ShiftKeys |= KBD_RGUI_BIT;
+		ShiftKeys |= KBD_LGUI_BIT;
 
 	if (pDevice->RightCtrl != overrideRCtrl)
 		ShiftKeys |= KBD_RCONTROL_BIT;
@@ -1373,6 +1428,8 @@ void keyPressed(PCROSKEYBOARD_CONTEXT pDevice) {
 		ShiftKeys |= KBD_RALT_BIT;
 	if (pDevice->RightShift)
 		ShiftKeys |= KBD_RSHIFT_BIT;
+	if (pDevice->RightWin)
+		ShiftKeys |= KBD_RGUI_BIT;
 
 	if (mediaKey) {
 		_CROSKEYBOARD_MEDIA_REPORT mediaReport;
