@@ -4,8 +4,6 @@
 static ULONG CrosKeyboardDebugLevel = 100;
 static ULONG CrosKeyboardDebugCatagories = DBG_INIT || DBG_PNP || DBG_IOCTL;
 
-#define POLL 0 //Enable for Bay Trail
-
 NTSTATUS
 DriverEntry(
 	__in PDRIVER_OBJECT  DriverObject,
@@ -1476,10 +1474,6 @@ BOOLEAN OnInterruptIsr(
 	if (!pDevice->ConnectInterrupt)
 		return true;
 
-#if POLL
-	return true;
-#endif
-
 	LARGE_INTEGER currentTime;
 	KeQuerySystemTime(&currentTime);
 
@@ -1528,14 +1522,6 @@ void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 	WDFDEVICE Device = (WDFDEVICE)WdfTimerGetParentObject(hTimer);
 	PCROSKEYBOARD_CONTEXT pDevice = GetDeviceContext(Device);
 
-#if POLL
-	unsigned char ps2code = __inbyte(0x60);
-	if (ps2code != pDevice->lastps2codeint) {
-		pDevice->lastps2codeint = ps2code;
-		pDevice->lastps2code = ps2code;
-		keyPressed(pDevice);
-	}
-#else
 	WDF_OBJECT_ATTRIBUTES attributes;
 	WDF_WORKITEM_CONFIG workitemConfig;
 	WDFWORKITEM hWorkItem;
@@ -1550,7 +1536,6 @@ void CrosKeyboardTimerFunc(_In_ WDFTIMER hTimer) {
 		&hWorkItem);
 
 	WdfWorkItemEnqueue(hWorkItem);
-#endif
 
 	return;
 }
