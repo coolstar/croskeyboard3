@@ -871,6 +871,14 @@ void CrosKeyboardChromebookLayout(PCROSKEYBOARD_CONTEXT pDevice,
 			else if (keyCode == 0x51) {
 				*overrideCtrl = true;
 				keyCodes[i] = 0x4e; //page down (down arrow)
+			}		
+			else if (keyCode == 0x50) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4a; //home (left arrow)
+			}
+			else if (keyCode == 0x4f) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4d; //end (right arrow)					
 			}
 		}
 		if (pDevice->RightCtrl) {
@@ -1076,6 +1084,14 @@ void CrosKeyboardMediaKeySwappedLayout(PCROSKEYBOARD_CONTEXT pDevice,
 			else if (keyCode == 0x51) {
 				*overrideCtrl = true;
 				keyCodes[i] = 0x4e; //page down (down arrow)
+			}		
+			else if (keyCode == 0x50) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4a; //home (left arrow)
+			}
+			else if (keyCode == 0x4f) {
+				*overrideCtrl = true;
+				keyCodes[i] = 0x4d; //end (right arrow)					
 			}
 		}
 		if (pDevice->RightCtrl) {
