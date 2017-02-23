@@ -4,7 +4,7 @@
 static ULONG CrosKeyboardDebugLevel = 100;
 static ULONG CrosKeyboardDebugCatagories = DBG_INIT || DBG_PNP || DBG_IOCTL;
 
-#define POLL 0 //Enable for Bay Trail
+#define POLL 0 //Enable for Polling
 
 NTSTATUS
 DriverEntry(
